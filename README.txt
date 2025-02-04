@@ -1,0 +1,1 @@
+All VS Code projects are going to go into this folder.
