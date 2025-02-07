@@ -1,12 +1,3 @@
-// need to add a box collider at the top of the page so that it does not fly off the screen, not game over, just prevent from jumping higher
-// need to replace the pipes and the flappy with graphics
-// need to add the clouds (make them move)
-// need to add a proper game over screen, make the scean freeze and display the score
-// high score?
-// make the score bigger
-// only start the game when the player presses space
-// interactive start screen
-
 const bird = {
     x: 450,
     y: 200,
