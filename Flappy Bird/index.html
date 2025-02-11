@@ -1,24 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flappy Bird</title>
+
+    <!-- Press Start 2P font from Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
     <style>
+        body {
+            text-align: center;
+            position: relative;
+        }
+
         canvas {
-            /* border: 2px solid black; */
             display: block;
-            margin: 0 auto;
+            margin: 20px auto;
             background-color: #FFA2DE;
+        }
+
+        #restartButton {
+            width: 200px;
+            height: 50px;
+            display: none;
+            /* Initially hidden */
+            position: absolute;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 20px;
+            padding: 10px 30px;
+            background-color: #D72638;
+            color: white;
+            border: 3px solid white;
+            cursor: pointer;
+            top: 61%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #restartButton:hover {
+            background-color: #B71C2B;
         }
     </style>
 </head>
+
 <body>
-    <canvas id="gameCanvas" width="900" height="450"></canvas>
-    
+    <canvas id="gameCanvas" width="450" height="550"></canvas>
+    <button id="restartButton">Restart</button>
+
     <script src="game.js"></script>
 </body>
+
 </html>

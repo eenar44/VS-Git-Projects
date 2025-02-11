@@ -48,11 +48,15 @@ document.addEventListener("keydown", function (event) {
         } else if (!gameOver) {
             jump(); // normal jump function
         }
+
+        if (gameOver) {
+            restartGame();
+        }
     }
 });
 
 // function when the reset button is clicked
-restartButton.addEventListener("click", function () {
+function restartGame() {
     // reset key variables
     gameOver = false;
     gameStarted = false;
@@ -62,7 +66,10 @@ restartButton.addEventListener("click", function () {
     score = 0;
     frame = 0;
     restartButton.style.display = "none";
-});
+}
+
+// Restart game when clicking the button
+restartButton.addEventListener("click", restartGame);
 
 // increase the velocity of the bird by the strentgh of the jump as long as the game isnt over
 function jump() {
@@ -136,10 +143,13 @@ function drawPipes() {
     }
 }
 
-// generates pipes every 100 frames
+// generates pipes
 function generatePipes() {
+
+    // dont generate pipes if the game hasnt started
     if (!gameStarted) { return };
 
+    // generates pipes every 100 frames
     if (frame % 100 === 0) {
         // created a random pipe height using random, the height of the canvas and the gap
         // '100' is used as buffer to ensure that a pipe isnt too long or too short
@@ -276,67 +286,41 @@ function update() {
 }
 
 function drawGameOverScreen() {
-    // Adjusted Box Dimensions
     let boxWidth = 300;
     let boxHeight = 250;
     let boxX = (canvas.width - boxWidth) / 2;
     let boxY = (canvas.height - boxHeight) / 2;
 
-    // Draw Border (Dark Brown)
+    // Draw box border
     ctx.fillStyle = "#5A3E2B";
     ctx.fillRect(boxX - 5, boxY - 5, boxWidth + 10, boxHeight + 10);
 
-    // Draw Background (Orange-Yellow)
+    // Draw box background
     ctx.fillStyle = "#F4A259";
     ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
 
-    // Set Text Properties
+    // Set text properties
     ctx.fillStyle = "white";
     ctx.font = "20px 'Press Start 2P', cursive";
 
-    // Function to Center Text Manually
+    // Function to manually center text
     function drawCenteredText(text, yOffset) {
         let textWidth = ctx.measureText(text).width;
-        let textX = boxX + (boxWidth - textWidth) / 2; // Manually centering text
+        let textX = boxX + (boxWidth - textWidth) / 2;
         ctx.fillText(text, textX, boxY + yOffset);
     }
 
-    // Draw Text Inside the Box
+    // Draw text inside the box
     drawCenteredText("Game Over", 50);
     drawCenteredText("Score", 90);
     drawCenteredText(score.toString(), 120);
     drawCenteredText("High Score", 150);
     drawCenteredText(highScore.toString(), 180);
 
-    // Adjusted Button Dimensions
-    let buttonWidth = 200;
-    let buttonHeight = 50;
-    let buttonX = (canvas.width - buttonWidth) / 2;
-    let buttonY = boxY + boxHeight - 60;
-
-    // Draw Button Border (White)
-    ctx.fillStyle = "white";
-    ctx.fillRect(buttonX - 3, buttonY - 3, buttonWidth + 6, buttonHeight + 6);
-
-    // Draw Button Background (#D72638)
-    ctx.fillStyle = "#D72638";
-    ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
-
-    // Draw Button Text Manually Centered
-    ctx.fillStyle = "white";
-    ctx.font = "22px 'Press Start 2P', cursive";
-    let buttonText = "Restart";
-    let buttonTextWidth = ctx.measureText(buttonText).width;
-    let buttonTextX = buttonX + (buttonWidth - buttonTextWidth) / 2;
-    ctx.fillText(buttonText, buttonTextX, buttonY + 33);
-
-    // Display actual HTML button for better click functionality
+    // Show restart button (CSS handles positioning)
     restartButton.style.display = "block";
-    restartButton.style.top = `${buttonY + canvas.offsetTop}px`;
-    restartButton.style.left = `${canvas.offsetLeft + buttonX}px`;
-    restartButton.style.width = `${buttonWidth}px`;
-    restartButton.style.height = `${buttonHeight}px`;
 }
+
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
