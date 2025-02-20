@@ -1,113 +1,101 @@
 import pygame
-import math
 import student  # Import student-defined variables and functions
 
-# pygame setup
-pygame.init()
-WIDTH, HEIGHT = 600, 800
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-clock = pygame.time.Clock()
-font = pygame.font.Font(None, 36)
+def run_simulation():
+    pygame.init()
+    WIDTH, HEIGHT = 800, 600
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    clock = pygame.time.Clock()
+    font = pygame.font.Font(None, 36)
 
-# colours
-WHITE = (255, 255, 255)
-RED = (255, 100, 0)
-GREY = (180, 180, 180)
-
-# rocket variables
-rocket_x = WIDTH // 2
-rocket_y = HEIGHT - 100
-vx = 0 
-vy = 0 
-fuel = 100
-angle = 90  # rocket starts pointing straight up
-
-# Quit Button
-quit_button = pygame.Rect(500, 20, 80, 40)
-
-# game Loop
-running = True
-while running:
-    screen.fill((0, 0, 20))
-
-    # draw Moon
-    pygame.draw.circle(screen, GREY, (WIDTH // 2, 150), 80)
-
-    # handle Events
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            if quit_button.collidepoint(event.pos):
-                running = False  # Quit when button is clicked
-
-    # apply Gravity
-    vy += student.GRAVITY  # Gravity pulls the rocket down
-
-    # handle Rotation (Left/Right)
-    keys = pygame.key.get_pressed()
+    # Colours
+    WHITE = (255, 255, 255)
+    RED = (255, 100, 0)
+    GREY = (180, 180, 180)
+    BLUE = (0, 100, 255)
+    GREEN = (0, 255, 0)
     
-    if keys[pygame.K_LEFT]:  # Rotate left
-        angle += 2
-    if keys[pygame.K_RIGHT]:  # Rotate right
-        angle -= 2
+    # Constants
+    BASE_WEIGHT = 50  
+    EARTH_POS = (WIDTH // 2 - 250, HEIGHT - 200)
+    MOON_POS = (WIDTH // 2 + 250, 200)
 
-    # thrust Logic (Upward thrust applied in direction of rocket angle)
-    thrust_active = keys[pygame.K_UP] or student.autopilot(rocket_y, vy)
+    def calculate_arc(t):
+        """Returns the (x, y) position along a quadratic arc."""
+        x = (1 - t) * EARTH_POS[0] + t * MOON_POS[0]
+        y = (1 - t) ** 2 * EARTH_POS[1] + 2 * (1 - t) * t * (HEIGHT // 15) + t ** 2 * MOON_POS[1]
+        return x, y
 
-    if thrust_active and fuel > 0:
-        # Apply thrust based on rocket angle (correctly using sin/cos)
+    # Rocket variables
+    t = 0  
+    fuel = student.FUEL
+    ROCKET_WEIGHT = BASE_WEIGHT + fuel
+    running = True
+    started = False
+    simulation_failed = False
+    simulation_success = False
 
-        if abs(angle - 90) < 1 or abs(angle - 270) < 1:  # Rocket is pointing straight up or down
-            thrust_x = 0  # No horizontal thrust
-            thrust_y = -student.THRUST if angle == 90 else student.THRUST  # Upward or downward
+    # Start Button
+    start_button = pygame.Rect(WIDTH // 2 - 50, HEIGHT // 2, 100, 40)
 
-        elif angle < 90:  # For angles less than 90 degrees (Rocket pointing up and to the right)
-            thrust_x = student.THRUST * math.sin(math.radians(angle))  # Positive horizontal thrust (right)
-            thrust_y = -student.THRUST * math.cos(math.radians(angle))  # Vertical thrust (upward)
-        else:  # For angles greater than 90 degrees (Rocket pointing up and to the left)
-            thrust_x = student.THRUST * -math.sin(math.radians(angle))  # Negative horizontal thrust (left)
-            thrust_y = student.THRUST * math.cos(math.radians(angle))  # Vertical thrust (upward)
+    def check_success():
+        nonlocal simulation_success, simulation_failed
+        if t >= 1 and fuel <= 10:
+            simulation_success = True
+        elif t >= 1 and fuel > 10:
+            simulation_failed = True
 
-        # Debugging thrust values
-        # print("Angle:", angle, "Thrust X:", thrust_x, "Thrust Y:", thrust_y)
+    while running:
+        screen.fill((0, 0, 20))
+        
+        pygame.draw.circle(screen, BLUE, EARTH_POS, 50)
+        pygame.draw.circle(screen, GREY, MOON_POS, 30)
 
-        # Update velocity with the thrust values
-        vx += thrust_x  # Add horizontal component to velocity
-        vy += thrust_y  # Add vertical component to velocity
-        fuel -= 0.5  # Reduce fuel
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if start_button.collidepoint(event.pos):
+                    started = True
 
-    # update Position
-    rocket_x += vx
-    rocket_y += vy
+        if started and not simulation_failed and not simulation_success:
+            ROCKET_WEIGHT = BASE_WEIGHT + fuel
+            effective_thrust = (student.THRUST / ROCKET_WEIGHT) * 20  
 
-    # collision with ground (when rocket reaches the bottom)
-    if rocket_y >= HEIGHT - 100:
-        rocket_y = HEIGHT - 100
-        vy = 0  # Stop vertical movement
-        vx = 0  # Stop horizontal movement
+            if fuel > 0:
+                fuel -= abs(student.THRUST) * 0.05  # More thrust = more fuel used
+                t += effective_thrust * 0.01  
+            else:
+                simulation_failed = True  
 
-    # draw Rocket (Now it Rotates!)
-    rocket_surface = pygame.Surface((40, 60), pygame.SRCALPHA)  # Create a blank surface
-    pygame.draw.polygon(rocket_surface, RED, [(20, 0), (40, 30), (0, 30)])  # Triangle nose
-    pygame.draw.rect(rocket_surface, RED, (10, 30, 20, 30))  # Body
-    pygame.draw.polygon(rocket_surface, RED, [(0, 60), (40, 60), (20, 45)])  # Fins
+            if t >= 1:
+                check_success()
+                t = 1
 
-    rotated_rocket = pygame.transform.rotate(rocket_surface, angle - 90)  # Rotate based on angle
-    rect = rotated_rocket.get_rect(center=(rocket_x, rocket_y))
+        rocket_x, rocket_y = calculate_arc(t)
+        pygame.draw.polygon(screen, RED, [(rocket_x, rocket_y - 10), (rocket_x - 5, rocket_y + 10), (rocket_x + 5, rocket_y + 10)])
 
-    screen.blit(rotated_rocket, rect.topleft)
+        if not started:
+            pygame.draw.rect(screen, (50, 200, 50), start_button)
+            start_text = font.render("START", True, WHITE)
+            screen.blit(start_text, (start_button.x + 15, start_button.y + 10))
+        
+        if simulation_failed:
+            fail_text = font.render("Simulation Failed!", True, RED)
+            screen.blit(fail_text, (WIDTH // 2 - 100, HEIGHT // 2 - 20))
+        
+        if simulation_success:
+            success_text = font.render("Simulation Succeeded!", True, GREEN)
+            screen.blit(success_text, (WIDTH // 2 - 120, HEIGHT // 2 - 20))
+        
+        info_text = font.render(f"Fuel: {fuel:.0f}", True, WHITE)
+        screen.blit(info_text, (20, 20))
 
-    # display Information
-    info_text = font.render(f"Alt: {HEIGHT - rocket_y:.0f} | Vel: {vy:.1f} | Fuel: {fuel:.0f}", True, WHITE)
-    screen.blit(info_text, (20, 20))
+        pygame.display.flip()
+        clock.tick(30)
 
-    # draw Quit Button
-    pygame.draw.rect(screen, (200, 50, 50), quit_button)
-    quit_text = font.render("QUIT", True, WHITE)
-    screen.blit(quit_text, (quit_button.x + 15, quit_button.y + 10))
+    pygame.quit()
 
-    pygame.display.flip()
-    clock.tick(30)
-
-pygame.quit()
+# Ensure that it only runs when explicitly called
+if __name__ == "__main__":
+    run_simulation()

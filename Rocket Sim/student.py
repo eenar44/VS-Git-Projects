@@ -1,8 +1,9 @@
-# 🚀 Student-editable settings
-GRAVITY = 0.5   # Gravity pulling rocket down
-THRUST = 1.2    # How powerful the rocket's engine is
+import simulator
 
-# Example: Students can write a simple autopilot function
-def autopilot(altitude, velocity):
-    """Simple autopilot: Fires thrust if altitude is low."""
-    pass
+# 🚀 Student-editable settings
+FUEL = 25  
+THRUST = 5
+
+# Run the simulation when this file is executed
+if __name__ == "__main__":
+    simulator.run_simulation()
