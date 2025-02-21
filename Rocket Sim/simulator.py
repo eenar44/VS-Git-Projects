@@ -14,6 +14,7 @@ def run_simulation():
     GREY = (180, 180, 180)
     BLUE = (0, 100, 255)
     GREEN = (0, 255, 0)
+    NIGHTBLUE = (0, 0, 20)
     
     # Constants
     BASE_WEIGHT = 50  
@@ -34,9 +35,12 @@ def run_simulation():
     started = False
     simulation_failed = False
     simulation_success = False
+    boost_timer = 0  # Countdown for boost duration
+    boost_flag = False # can only use the boost once per simulation!
 
     # Start Button
     start_button = pygame.Rect(WIDTH // 2 - 50, HEIGHT // 2, 100, 40)
+    boost_button = pygame.Rect(WIDTH // 2 + 250, HEIGHT // 2 + 225, 100, 40)
 
     def check_success():
         nonlocal simulation_success, simulation_failed
@@ -46,7 +50,7 @@ def run_simulation():
             simulation_failed = True
 
     while running:
-        screen.fill((0, 0, 20))
+        screen.fill(NIGHTBLUE)
         
         pygame.draw.circle(screen, BLUE, EARTH_POS, 50)
         pygame.draw.circle(screen, GREY, MOON_POS, 30)
@@ -57,14 +61,26 @@ def run_simulation():
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if start_button.collidepoint(event.pos):
                     started = True
+                elif boost_button.collidepoint(event.pos) and started:
+                    fuel, THRUST = student.emergency_boost(fuel, student.THRUST)
+                    boost_timer = 100  # Boost lasts for 30 frames (1 second at 30 FPS)
+
 
         if started and not simulation_failed and not simulation_success:
             ROCKET_WEIGHT = BASE_WEIGHT + fuel
-            effective_thrust = (student.THRUST / ROCKET_WEIGHT) * 20  
+            
+            if boost_timer > 0:
+                boost_timer -= 1  # Decrease the timer each frame
+
+            # Adjust thrust dynamically if boost is active
+            effective_thrust = ((student.THRUST * (1.5 if boost_timer > 0 else 1)) / ROCKET_WEIGHT) * 20 
+            
 
             if fuel > 0:
-                fuel -= abs(student.THRUST) * 0.05  # More thrust = more fuel used
-                t += effective_thrust * 0.01  
+                if boost_timer == 0:  # Only consume fuel if boost is NOT active
+                    fuel -= abs(student.THRUST) * 0.05
+                print(boost_timer)
+                t += effective_thrust * 0.01
             else:
                 simulation_failed = True  
 
@@ -80,6 +96,11 @@ def run_simulation():
             start_text = font.render("START", True, WHITE)
             screen.blit(start_text, (start_button.x + 15, start_button.y + 10))
         
+        if started:
+            pygame.draw.rect(screen, (200, 50, 50), boost_button)
+            boost_text = font.render("BOOST", True, WHITE)
+            screen.blit(boost_text, (boost_button.x + 15, boost_button.y + 10))
+    
         if simulation_failed:
             fail_text = font.render("Simulation Failed!", True, RED)
             screen.blit(fail_text, (WIDTH // 2 - 100, HEIGHT // 2 - 20))
@@ -88,7 +109,7 @@ def run_simulation():
             success_text = font.render("Simulation Succeeded!", True, GREEN)
             screen.blit(success_text, (WIDTH // 2 - 120, HEIGHT // 2 - 20))
         
-        info_text = font.render(f"Fuel: {fuel:.0f}", True, WHITE)
+        info_text = font.render(f"Fuel: {fuel:.2f}", True, WHITE)
         screen.blit(info_text, (20, 20))
 
         pygame.display.flip()
